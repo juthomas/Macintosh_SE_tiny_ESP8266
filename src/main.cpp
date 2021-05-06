@@ -13,8 +13,9 @@ HTTPClient httpsClient;
 
 // Declaration for an SSD1306 display connected to I2C (SDA, SCL pins)
 #define OLED_RESET -1 // Reset pin # (or -1 if sharing Arduino reset pin)
-//TwoWire second_wire;
-//Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &second_wire, OLED_RESET);
+
+// SDA => D2
+// SCK => D1
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 #define NUMFLAKES 10 // Number of snowflakes in the animation example
@@ -317,7 +318,9 @@ void customPrintStringZone(String str, int x, int y, int lineSpacing)
 
 void printHttpPageContent(String link)
 {
-	String textString = getHttpsPagePayload("https://juthomas.github.io/test_site_web/micro-pc-content");
+	// https://raw.githubusercontent.com/juthomas/Macintosh_SE_tiny_ESP8266/master/se_state
+	String textString = getHttpsPagePayload("https://raw.githubusercontent.com/juthomas/Macintosh_SE_tiny_ESP8266/master/se_state");
+	// String textString = getHttpsPagePayload("https://juthomas.github.io/test_site_web/micro-pc-content");
 	//display.clearDisplay();
 	display.setTextSize(1);		 // Normal 1:1 pixel scale
 	display.setTextColor(BLACK); // Draw white text
@@ -484,7 +487,10 @@ void print_time()
 	display.cp437(true);
 
 	//display.println(F("time :"));
-	Serial.println(NTP.getTimeStr());
+
+	// Serial.println(NTP.getTimeStr());
+
+
 	display.println(NTP.getTimeStr());
 
 	//Serial.println(NTP.getTimeDateString());
