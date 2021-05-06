@@ -1,4 +1,5 @@
 PLAY_PONG
-[VIEW_DESKTOP]
+VIEW_DESKTOP
 MOVE_MOUSE
+[DISPLAY_TIME]
 {https://raw.githubusercontent.com/juthomas/Matcha_Solo/master/server/index.js}
