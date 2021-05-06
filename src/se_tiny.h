@@ -58,8 +58,8 @@ static const unsigned char PROGMEM mac_logo3_bmp[] =
 		B01111100,
 		B01111100,
 		B01111110,
-		B00111110,
-		B00011100,
+		B01111110,
+		B00111100,
 };
 
 #define TRASH_LOGO_HEIGHT 8
