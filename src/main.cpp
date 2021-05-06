@@ -59,7 +59,7 @@ void setup()
 	{
 		Serial.print("..");
 		displayLoading();
-		delay(500);
+		delay(1000);
 		_try++;
 		if (_try >= NB_TRYWIFI)
 		{
@@ -70,6 +70,14 @@ void setup()
 			ESP.deepSleep(10e6);
 		}
 	}
+	while (_try < 5)
+	{
+		displayLoading();
+		delay(700);
+		_try++;
+	}
+
+
 	//display.clearDisplay();
 	Serial.println("Connected to the WiFi network");
 	//display.println("Connected to the WiFi network");
