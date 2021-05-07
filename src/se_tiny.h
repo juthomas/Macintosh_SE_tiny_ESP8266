@@ -8,7 +8,7 @@
 #include <WiFiUdp.h>
 #include <ESP8266HTTPClient.h>
 #include <WiFiClientSecureBearSSL.h>
-#define NB_TRYWIFI 100
+#define NB_TRYWIFI 20
 
 const char *ssid = "Livebox-75C0";
 const char *password = "ipW2j3EzJQg6LF9Er6";

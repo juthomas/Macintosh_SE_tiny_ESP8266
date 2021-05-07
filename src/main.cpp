@@ -59,7 +59,7 @@ void setup()
 	{
 		Serial.print("..");
 		displayLoading();
-		delay(1000);
+		delay(1000 + 1000 * _try);
 		_try++;
 		if (_try >= NB_TRYWIFI)
 		{
@@ -68,6 +68,7 @@ void setup()
 			display.println("Impossible to connect WiFi network, go to deep sleep");
 			display.display();
 			ESP.deepSleep(10e6);
+			ESP.restart();
 		}
 	}
 	while (_try < 5)
