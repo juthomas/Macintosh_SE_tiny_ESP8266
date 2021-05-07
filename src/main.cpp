@@ -213,16 +213,16 @@ void displayTimeMode()
 	display.drawLine(0, 18, display.width(), 18, SSD1306_BLACK);
 	display.drawRect(1, 12, 5, 5, SSD1306_BLACK);
 
-	display.drawLine(8, 12, 38, 12, SSD1306_BLACK);
-	display.drawLine(8, 14, 38, 14, SSD1306_BLACK);
-	display.drawLine(8, 16, 38, 16, SSD1306_BLACK);
+	display.drawLine(8, 12, 40, 12, SSD1306_BLACK);
+	display.drawLine(8, 14, 40, 14, SSD1306_BLACK);
+	display.drawLine(8, 16, 40, 16, SSD1306_BLACK);
 
 
-	display.drawBitmap(42, 12, date_title_bmp, DATE_TITLE_WIDTH, DATE_TITLE_HEIGHT, SSD1306_BLACK);
+	display.drawBitmap(44, 12, date_title_bmp, DATE_TITLE_WIDTH, DATE_TITLE_HEIGHT, SSD1306_BLACK);
 
-	display.drawLine(78, 12, 113, 12, SSD1306_BLACK);
-	display.drawLine(78, 14, 113, 14, SSD1306_BLACK);
-	display.drawLine(78, 16, 113, 16, SSD1306_BLACK);
+	display.drawLine(81, 12, 113, 12, SSD1306_BLACK);
+	display.drawLine(81, 14, 113, 14, SSD1306_BLACK);
+	display.drawLine(81, 16, 113, 16, SSD1306_BLACK);
 
 
 	display.drawRect(116, 12, 5, 5, SSD1306_BLACK);
