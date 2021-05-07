@@ -218,6 +218,38 @@ static const unsigned char PROGMEM pong_ball_bmp[] =
 
 };
 
+#define DATE_TITLE_HEIGHT 5
+#define DATE_TITLE_WIDTH 40
+static const unsigned char PROGMEM date_title_bmp[] =
+	{
+		B11100000,B00100000,B00000010,B00000001,B00000000,
+		B10010000,B01110000,B00000111,B00000011,B10000000,
+		B10010010,B00100001,B00000010,B00101001,B00000000,
+		B10010101,B00100010,B10000010,B00010001,B00000000,
+		B11110010,B10011001,B11010001,B10101000,B10000000
+};
+
+
+#define ARROW_UP_HEIGHT 4
+#define ARROW_UP_WIDTH 8
+static const unsigned char PROGMEM arrow_up_bmp[] =
+	{
+		B00010000,
+		B00111000,
+		B01111100,
+		B00000000
+};
+
+#define ARROW_DOWN_HEIGHT 4
+#define ARROW_DOWN_WIDTH 8
+static const unsigned char PROGMEM arrow_down_bmp[] =
+	{
+		B00000000,
+		B01111100,
+		B00111000,
+		B00010000,
+};
+
 void displayBackground();
 
 void displayLoading();

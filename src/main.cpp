@@ -73,10 +73,9 @@ void setup()
 	while (_try < 5)
 	{
 		displayLoading();
-		delay(700);
+		delay(600);
 		_try++;
 	}
-
 
 	//display.clearDisplay();
 	Serial.println("Connected to the WiFi network");
@@ -209,6 +208,87 @@ void viewDesktopMode()
 	display.drawBitmap(30, 50, mouse_bmp, MOUSE_WIDTH, MOUSE_HEIGHT, SSD1306_BLACK);
 }
 
+void displayTimeMode()
+{
+	display.drawLine(0, 18, display.width(), 18, SSD1306_BLACK);
+	display.drawRect(1, 12, 5, 5, SSD1306_BLACK);
+
+	display.drawLine(8, 12, 38, 12, SSD1306_BLACK);
+	display.drawLine(8, 14, 38, 14, SSD1306_BLACK);
+	display.drawLine(8, 16, 38, 16, SSD1306_BLACK);
+
+
+	display.drawBitmap(42, 12, date_title_bmp, DATE_TITLE_WIDTH, DATE_TITLE_HEIGHT, SSD1306_BLACK);
+
+	display.drawLine(78, 12, 113, 12, SSD1306_BLACK);
+	display.drawLine(78, 14, 113, 14, SSD1306_BLACK);
+	display.drawLine(78, 16, 113, 16, SSD1306_BLACK);
+
+
+	display.drawRect(116, 12, 5, 5, SSD1306_BLACK);
+	display.drawRect(116, 12, 3, 3, SSD1306_BLACK);
+	display.drawRect(122, 12, 5, 5, SSD1306_BLACK);
+	display.drawLine(122, 14, 126, 14, SSD1306_BLACK);
+
+
+	display.drawLine(120, 19, 120, display.height(), SSD1306_BLACK);
+	display.fillRect(122, 20, 5, 17, SSD1306_BLACK);
+	display.drawLine(120, 48, 128, 48, SSD1306_BLACK);
+	display.drawLine(120, 56, 128, 56, SSD1306_BLACK);
+	display.drawBitmap(121, 51, arrow_up_bmp, ARROW_UP_WIDTH, ARROW_UP_HEIGHT, SSD1306_BLACK);
+	display.drawBitmap(121, 58, arrow_down_bmp, ARROW_DOWN_WIDTH, ARROW_DOWN_HEIGHT, SSD1306_BLACK);
+	display.drawBitmap(100, 52, mouse_bmp, MOUSE_WIDTH, MOUSE_HEIGHT, SSD1306_BLACK);
+
+
+	display.setTextSize(1);		 // Normal 1:1 pixel scale
+	display.setTextColor(BLACK); // Draw white text
+		 // Start at top-left corner
+	//display.setCursor(10, 1);     // Start at top-left corner
+	display.cp437(true);
+	//display.println(F("time :"));
+
+	// Serial.println(NTP.getTimeStr());
+	// time_t currentTime = NTP.getTime();
+	struct tm test = {0};
+	sscanf(NTP.getTimeDateString().c_str(), "%d:%d:%d %d/%d/%d",
+		   &test.tm_hour, &test.tm_min, &test.tm_sec, &test.tm_mday, &test.tm_mon, &test.tm_year);
+	// Serial.printf("h:%d, m:%d, s:%d    d:%d, m:%d, y%d\n", test.tm_hour, test.tm_min, test.tm_sec,
+	// 			  test.tm_mday, test.tm_mon, test.tm_year);
+	test.tm_isdst = -1; // Assume local daylight setting per date/time
+	test.tm_mon--;		// Months since January
+	if (test.tm_year >= 0 && test.tm_year < 100)
+	{
+		test.tm_year += 2000;
+	}
+	test.tm_year -= 1900; // Years since 1900
+	time_t currentTime = mktime(&test);
+	display.setCursor(6, 28);
+	display.printf("%s,", dayStr(dayOfWeek(currentTime)));
+	display.setCursor(6, 39);
+	display.printf("%d", day(currentTime));
+	if (day(currentTime) == 1 || day(currentTime) == 21 || day(currentTime) == 31)
+	{
+		display.print("st");
+	}
+	else if (day(currentTime) == 2 || day(currentTime) == 22)
+	{
+		display.print("nd");
+	}
+	else if (day(currentTime) == 3 || day(currentTime) == 23)
+	{
+		display.print("rd");
+	}
+	else
+	{
+		display.print("th");
+	}
+	display.printf(" %s %04d", monthStr(month(currentTime)), year(currentTime));
+
+	// display.println(NTP.getTimeDateString());
+	// display.println(NTP.getDateStr());
+	// display.println(NTP.getTimeStr());
+}
+
 void playPongMode()
 {
 	display.drawBitmap(60, 14, pong_middle_bmp, PONG_MIDDLE_WIDTH, PONG_MIDDLE_HEIGHT, SSD1306_BLACK);
@@ -222,7 +302,11 @@ void playPongMode()
 	int x_current;
 	int x_min = 8 + 2;
 	int x_max = 128 - 8 - 2 - 3;
-	bool playerTurn = false;
+	static bool playerTurn = false;
+	static int y_player_1 = 30 - 7;
+	static int y_player_1_old = 30;
+	static int y_player_2 = 30 - 7;
+	static int y_player_2_old = 30;
 
 	for (int positions = 0; positions < 20; positions++)
 	{
@@ -235,15 +319,32 @@ void playPongMode()
 			display.clearDisplay();
 			displayBackground();
 			print_time();
+
+			if (!playerTurn)
+			{
+				y_player_1 = map(percentage, 0, 100, y_player_1_old, y_desired) - 7;
+			}
+			else
+			{
+				y_player_2 = map(percentage, 0, 100, y_player_2_old, y_desired) - 7;
+			}
 			//drawDestopIcons();
 			//display.drawBitmap(x_current, y_current, mouse_bmp, MOUSE_WIDTH, MOUSE_HEIGHT, SSD1306_BLACK);
 			display.drawBitmap(60, 14, pong_middle_bmp, PONG_MIDDLE_WIDTH, PONG_MIDDLE_HEIGHT, SSD1306_BLACK);
-			display.drawBitmap(5, y_current - 7, pong_player_bmp, PONG_PLAYER_WIDTH, PONG_PLAYER_HEIGHT, SSD1306_BLACK);
-			display.drawBitmap(116, y_current - 7, pong_player_bmp, PONG_PLAYER_WIDTH, PONG_PLAYER_HEIGHT, SSD1306_BLACK);
+			display.drawBitmap(5, y_player_1, pong_player_bmp, PONG_PLAYER_WIDTH, PONG_PLAYER_HEIGHT, SSD1306_BLACK);
+			display.drawBitmap(116, y_player_2, pong_player_bmp, PONG_PLAYER_WIDTH, PONG_PLAYER_HEIGHT, SSD1306_BLACK);
 			display.drawBitmap(x_current, y_current, pong_ball_bmp, PONG_BALL_WIDTH, PONG_BALL_HEIGHT, SSD1306_BLACK);
 			display.display();
 		}
 
+		if (!playerTurn)
+		{
+			y_player_1_old = y_desired;
+		}
+		else
+		{
+			y_player_2_old = y_desired;
+		}
 		y_actual = y_desired;
 		playerTurn = playerTurn == true ? false : true;
 	}
@@ -282,7 +383,19 @@ void moveMouseMode()
 void customPrintStringZone(String str, int x, int y, int lineSpacing)
 {
 	String tmpStr = "";
-	if (str.indexOf("[VIEW_DESKTOP]") != -1)
+
+	if (str.indexOf("[{") != -1 && str.indexOf("}]") != -1 && str.indexOf("[{") < str.indexOf("}]"))
+	{
+		tmpStr = str.substring(str.indexOf("[{") + 2, str.indexOf("}]"));
+		Serial.printf("Http request : ");
+		String pageContent = getHttpsPagePayload(tmpStr);
+		display.setCursor(x, y);
+		display.print(pageContent);
+
+		Serial.println(pageContent);
+		return;
+	}
+	else if (str.indexOf("[VIEW_DESKTOP]") != -1)
 	{
 		viewDesktopMode();
 		return;
@@ -295,6 +408,11 @@ void customPrintStringZone(String str, int x, int y, int lineSpacing)
 	else if (str.indexOf("[MOVE_MOUSE]") != -1)
 	{
 		moveMouseMode();
+		return;
+	}
+	else if (str.indexOf("[DISPLAY_TIME]") != -1)
+	{
+		displayTimeMode();
 		return;
 	}
 
@@ -335,14 +453,17 @@ void printHttpPageContent(String link)
 	display.setCursor(1, 12);	 // Start at top-left corner
 	display.cp437(true);
 
-	customPrintStringZone(textString, 1, 12, 10);
+	customPrintStringZone(textString, 1, 12, 9);
 	//display.print(textString);
 }
 
 String getHttpsPagePayload(String link)
 {
 	String payload = "";
+
 	Serial.print("[HTTPS] begin...\n");
+	Serial.print("Link Requested :");
+	Serial.println(link);
 	if (httpsClient.begin(*client, link))
 	{ // HTTPS
 
@@ -497,7 +618,6 @@ void print_time()
 	//display.println(F("time :"));
 
 	// Serial.println(NTP.getTimeStr());
-
 
 	display.println(NTP.getTimeStr());
 
