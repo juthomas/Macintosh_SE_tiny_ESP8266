@@ -1,12 +1,12 @@
 #include "./se_tiny.h"
 
-//HttpClient httpClient__;
+// HttpClient httpClient__;
 WiFiClient espClient;
-WiFiUDP ntpUDP;
-//HTTPClient httpClient;
+// WiFiUDP ntpUDP;
+// HTTPClient httpClient;
 HTTPClient httpsClient;
 
-//NTPClient timeClient(ntpUDP, "europe.pool.ntp.org", 3600, 60000);
+// NTPClient timeClient(ntpUDP, "europe.pool.ntp.org", 3600, 60000);
 
 #define SCREEN_WIDTH 128 // OLED display width, in pixels
 #define SCREEN_HEIGHT 64 // OLED display height, in pixels
@@ -21,6 +21,51 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 #define NUMFLAKES 10 // Number of snowflakes in the animation example
 
 std::unique_ptr<BearSSL::WiFiClientSecure> client(new BearSSL::WiFiClientSecure);
+ESP8266WebServer server(80);
+WebSocketsServer webSocket = WebSocketsServer(81);
+
+time_t syncTime = 0;
+time_t syncOffset = 0;
+
+
+void webSocketEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t length)
+{
+	Serial.println("socket received");
+	if (type == WStype_TEXT)
+	{
+		Serial.println((char *)payload);
+
+		if (strncmp((char *)payload, "[START]", sizeof("[START]") - 1) == 0)
+		{
+
+			syncTime = atoi((char *)payload + sizeof("[START]") - 1);
+			syncOffset = millis() / 1000;
+			
+			
+			time_t currentTime = atoi((char *)payload + sizeof("[START]") - 1);
+
+
+
+			Serial.printf("%d", day(currentTime));
+			if (day(currentTime) == 1 || day(currentTime) == 21 || day(currentTime) == 31)
+			{
+				Serial.print("st");
+			}
+			else if (day(currentTime) == 2 || day(currentTime) == 22)
+			{
+				Serial.print("nd");
+			}
+			else if (day(currentTime) == 3 || day(currentTime) == 23)
+			{
+				Serial.print("rd");
+			}
+			else
+			{
+				Serial.print("th");
+			}
+		}
+	}
+}
 
 void setup()
 {
@@ -42,71 +87,83 @@ void setup()
 	// Show initial display buffer contents on the screen --
 	// the library initializes this with an Adafruit splash screen.
 	display.display();
-	//delay(1000); // Pause for 2 seconds
+	// delay(1000); // Pause for 2 seconds
 
 	// Clear the buffer
 	display.clearDisplay();
 
-	WiFi.begin(ssid, password);
+	WiFi.softAP(ssid);
+	// WiFi.begin(ssid, password);
 
-	//display.drawBitmap(30, 30, mac_logo2_bmp, LOGO2_WIDTH, LOGO2_HEIGHT, SSD1306_WHITE);
+	// display.drawBitmap(30, 30, mac_logo2_bmp, LOGO2_WIDTH, LOGO2_HEIGHT, SSD1306_WHITE);
 
-	//display.println("Connecting to WiFi.");
-	//display.display();
+	// display.println("Connecting to WiFi.");
+	// display.display();
 	Serial.println("Connecting to WiFi.");
 	int _try = 0;
-	while (WiFi.status() != WL_CONNECTED)
-	{
-		Serial.print("..");
-		displayLoading();
-		delay(1000 + 1000 * _try);
-		_try++;
-		if (_try >= NB_TRYWIFI)
-		{
-			display.clearDisplay();
-			Serial.println("Impossible to connect WiFi network, go to deep sleep");
-			display.println("Impossible to connect WiFi network, go to deep sleep");
-			display.display();
-			ESP.deepSleep(10e6);
-			ESP.restart();
-		}
-	}
-	while (_try < 5)
-	{
-		displayLoading();
-		delay(600);
-		_try++;
-	}
+	// while (WiFi.status() != WL_CONNECTED)
+	// {
+	// 	Serial.print("..");
+	// 	displayLoading();
+	// 	delay(1000 + 1000 * _try);
+	// 	_try++;
+	// 	if (_try >= NB_TRYWIFI)
+	// 	{
+	// 		display.clearDisplay();
+	// 		Serial.println("Impossible to connect WiFi network, go to deep sleep");
+	// 		display.println("Impossible to connect WiFi network, go to deep sleep");
+	// 		display.display();
+	// 		ESP.deepSleep(10e6);
+	// 		ESP.restart();
+	// 	}
+	// }
+	IPAddress IP = WiFi.softAPIP();
+	Serial.print("AP IP address: ");
+	Serial.println(IP);
+	SPIFFS.begin();
+	server.serveStatic("/", SPIFFS, "/index.html");
+	server.serveStatic("/main.js", SPIFFS, "/main.js");
 
-	//display.clearDisplay();
+	server.begin();
+	webSocket.begin();
+	webSocket.onEvent(webSocketEvent);
+
+	// while (_try < 500)
+	// {
+	// 	displayLoading();
+	// 	delay(600);
+	// 	_try++;
+	// }
+
+	// display.clearDisplay();
 	Serial.println("Connected to the WiFi network");
-	//display.println("Connected to the WiFi network");
-	//display.display();
-	// Draw a single pixel in white
-	// display.drawPixel(10, 10, WHITE);
+	// display.println("Connected to the WiFi network");
+	// display.display();
+	//  Draw a single pixel in white
+	//  display.drawPixel(10, 10, WHITE);
 
 	// Show the display buffer on the screen. You MUST call display() after
 	// drawing commands to make them visible on screen!
-	//display.display();
-	//delay(2000);
+	// display.display();
+	// delay(2000);
 	// display.display() is NOT necessary after every single drawing command,
 	// unless that's what you want...rather, you can batch up a bunch of
 	// drawing operations and then update the screen all at once by calling
 	// display.display(). These examples demonstrate both approaches...
-	//display.clearDisplay();
-	//display.println("NTP client starting...");
+	// display.clearDisplay();
+	// display.println("NTP client starting...");
 	Serial.println("NTP client starting...");
-	//display.display();
+	// display.display();
 	displayLoading();
-	NTP.begin("pool.ntp.org", 1, true);
-	NTP.setInterval(1000);
-	//timeClient.begin();
-	//display.clearDisplay();
-	//display.println("NTP client started!");
+	// NTP.begin("pool.ntp.org", 1, true);
+	// NTP.setInterval(1000);
+	// timeClient.begin();
+	// display.clearDisplay();
+	// display.println("NTP client started!");
 	Serial.println("NTP client started!");
 	display.display();
 
-	client->setInsecure();
+	// client->setInsecure();
 
 	/*httpClient.begin("http://www.arduino.cc/asciilogo.txt");
 	int httpCode = httpClient.GET();
@@ -123,7 +180,7 @@ void setup()
 	}else {
 					 Serial.printf("[HTTP] GET... failed, error: %s\n", httpClient.errorToString(httpCode).c_str());
 			 }
-	
+
 //  client.get("http://www.arduino.cc/asciilogo.txt");
 }*/
 
@@ -145,12 +202,16 @@ NTP.onNTPSyncEvent([](NTPSyncEvent_t error) {
 }
 void loop()
 {
+	// displayLoading();
+	webSocket.loop();
+	server.handleClient();
+
 	display.clearDisplay();
 	displayBackground();
-	printHttpPageContent("https://juthomas.github.io/test_site_web/micro-pc-content");
+	// printHttpPageContent("https://juthomas.github.io/test_site_web/micro-pc-content");
 	print_time();
 	display.display();
-	delay(500);
+	// delay(500);
 }
 
 void displayBackground()
@@ -218,19 +279,16 @@ void displayTimeMode()
 	display.drawLine(8, 14, 40, 14, SSD1306_BLACK);
 	display.drawLine(8, 16, 40, 16, SSD1306_BLACK);
 
-
 	display.drawBitmap(44, 12, date_title_bmp, DATE_TITLE_WIDTH, DATE_TITLE_HEIGHT, SSD1306_BLACK);
 
 	display.drawLine(81, 12, 113, 12, SSD1306_BLACK);
 	display.drawLine(81, 14, 113, 14, SSD1306_BLACK);
 	display.drawLine(81, 16, 113, 16, SSD1306_BLACK);
 
-
 	display.drawRect(116, 12, 5, 5, SSD1306_BLACK);
 	display.drawRect(116, 12, 3, 3, SSD1306_BLACK);
 	display.drawRect(122, 12, 5, 5, SSD1306_BLACK);
 	display.drawLine(122, 14, 126, 14, SSD1306_BLACK);
-
 
 	display.drawLine(120, 19, 120, display.height(), SSD1306_BLACK);
 	display.fillRect(122, 20, 5, 17, SSD1306_BLACK);
@@ -240,19 +298,18 @@ void displayTimeMode()
 	display.drawBitmap(121, 58, arrow_down_bmp, ARROW_DOWN_WIDTH, ARROW_DOWN_HEIGHT, SSD1306_BLACK);
 	display.drawBitmap(100, 52, mouse_bmp, MOUSE_WIDTH, MOUSE_HEIGHT, SSD1306_BLACK);
 
-
 	display.setTextSize(1);		 // Normal 1:1 pixel scale
 	display.setTextColor(BLACK); // Draw white text
-		 // Start at top-left corner
-	//display.setCursor(10, 1);     // Start at top-left corner
+								 // Start at top-left corner
+	// display.setCursor(10, 1);     // Start at top-left corner
 	display.cp437(true);
-	//display.println(F("time :"));
+	// display.println(F("time :"));
 
 	// Serial.println(NTP.getTimeStr());
 	// time_t currentTime = NTP.getTime();
 	struct tm test = {0};
-	sscanf(NTP.getTimeDateString().c_str(), "%d:%d:%d %d/%d/%d",
-		   &test.tm_hour, &test.tm_min, &test.tm_sec, &test.tm_mday, &test.tm_mon, &test.tm_year);
+	// sscanf(NTP.getTimeDateString().c_str(), "%d:%d:%d %d/%d/%d",
+	// 	   &test.tm_hour, &test.tm_min, &test.tm_sec, &test.tm_mday, &test.tm_mon, &test.tm_year);
 	// Serial.printf("h:%d, m:%d, s:%d    d:%d, m:%d, y%d\n", test.tm_hour, test.tm_min, test.tm_sec,
 	// 			  test.tm_mday, test.tm_mon, test.tm_year);
 	test.tm_isdst = -1; // Assume local daylight setting per date/time
@@ -262,28 +319,29 @@ void displayTimeMode()
 		test.tm_year += 2000;
 	}
 	test.tm_year -= 1900; // Years since 1900
-	time_t currentTime = mktime(&test);
+	// time_t currentTime = mktime(&test);
 	display.setCursor(6, 28);
-	display.printf("%s,", dayStr(dayOfWeek(currentTime)));
+	// display.printf("%s,", dayStr(dayOfWeek(currentTime)));
 	display.setCursor(6, 39);
-	display.printf("%d", day(currentTime));
-	if (day(currentTime) == 1 || day(currentTime) == 21 || day(currentTime) == 31)
-	{
-		display.print("st");
-	}
-	else if (day(currentTime) == 2 || day(currentTime) == 22)
-	{
-		display.print("nd");
-	}
-	else if (day(currentTime) == 3 || day(currentTime) == 23)
-	{
-		display.print("rd");
-	}
-	else
-	{
-		display.print("th");
-	}
-	display.printf(" %s %04d", monthStr(month(currentTime)), year(currentTime));
+	// display.printf("%d", day(currentTime));
+	// if (day(currentTime) == 1 || day(currentTime) == 21 || day(currentTime) == 31)
+	// {
+	// 	display.print("st");
+	// }
+	// else if (day(currentTime) == 2 || day(currentTime) == 22)
+	// {
+	// 	display.print("nd");
+	// }
+	// else if (day(currentTime) == 3 || day(currentTime) == 23)
+	// {
+	// 	display.print("rd");
+	// }
+	// else
+	// {
+	// 	display.print("th");
+	// }
+
+	// display.printf(" %s %04d", monthStr(month(currentTime)), year(currentTime));
 
 	// display.println(NTP.getTimeDateString());
 	// display.println(NTP.getDateStr());
@@ -329,8 +387,8 @@ void playPongMode()
 			{
 				y_player_2 = map(percentage, 0, 100, y_player_2_old, y_desired) - 7;
 			}
-			//drawDestopIcons();
-			//display.drawBitmap(x_current, y_current, mouse_bmp, MOUSE_WIDTH, MOUSE_HEIGHT, SSD1306_BLACK);
+			// drawDestopIcons();
+			// display.drawBitmap(x_current, y_current, mouse_bmp, MOUSE_WIDTH, MOUSE_HEIGHT, SSD1306_BLACK);
 			display.drawBitmap(60, 14, pong_middle_bmp, PONG_MIDDLE_WIDTH, PONG_MIDDLE_HEIGHT, SSD1306_BLACK);
 			display.drawBitmap(5, y_player_1, pong_player_bmp, PONG_PLAYER_WIDTH, PONG_PLAYER_HEIGHT, SSD1306_BLACK);
 			display.drawBitmap(116, y_player_2, pong_player_bmp, PONG_PLAYER_WIDTH, PONG_PLAYER_HEIGHT, SSD1306_BLACK);
@@ -448,14 +506,14 @@ void printHttpPageContent(String link)
 	// https://raw.githubusercontent.com/juthomas/Macintosh_SE_tiny_ESP8266/master/se_state
 	String textString = getHttpsPagePayload("https://raw.githubusercontent.com/juthomas/Macintosh_SE_tiny_ESP8266/master/se_state");
 	// String textString = getHttpsPagePayload("https://juthomas.github.io/test_site_web/micro-pc-content");
-	//display.clearDisplay();
+	// display.clearDisplay();
 	display.setTextSize(1);		 // Normal 1:1 pixel scale
 	display.setTextColor(BLACK); // Draw white text
 	display.setCursor(1, 12);	 // Start at top-left corner
 	display.cp437(true);
 
 	customPrintStringZone(textString, 1, 12, 9);
-	//display.print(textString);
+	// display.print(textString);
 }
 
 String getHttpsPagePayload(String link)
@@ -489,8 +547,8 @@ String getHttpsPagePayload(String link)
 					payload = httpsClient.getString();
 					Serial.println(payload);
 
-					//String payload = httpsClient.getString();
-					//Serial.println(payload);
+					// String payload = httpsClient.getString();
+					// Serial.println(payload);
 				}
 				else
 				{
@@ -549,13 +607,13 @@ void getHttpsPageStream(String link)
 							int c = client->readBytes(buff, ((size > sizeof(buff) - 1) ? sizeof(buff) - 1 : size));
 
 							// write it to Serial
-							//Serial.write(buff, c);
+							// Serial.write(buff, c);
 							Serial.println(ESP.getFreeHeap(), DEC);
 							Serial.printf("Prepare to feed httpsContent, left %d\n", len);
 							httpsContent += ((const __FlashStringHelper *)buff);
 							;
 
-							//httpsContent += toCharArray(buff, c);
+							// httpsContent += toCharArray(buff, c);
 							if (len > 0)
 							{
 								len -= c;
@@ -566,8 +624,8 @@ void getHttpsPageStream(String link)
 					Serial.println("https content : ");
 					Serial.println(httpsContent);
 
-					//String payload = httpsClient.getString();
-					//Serial.println(payload);
+					// String payload = httpsClient.getString();
+					// Serial.println(payload);
 				}
 				else
 				{
@@ -606,25 +664,29 @@ void print_time()
 	}
 	Serial.flush();
 */
-	//delay(5000);
+	// delay(5000);
 
-	//timeClient.update();
-	//display.clearDisplay();
+	// timeClient.update();
+	// display.clearDisplay();
 	display.setTextSize(1);		 // Normal 1:1 pixel scale
 	display.setTextColor(BLACK); // Draw white text
 	display.setCursor(77, 1);	 // Start at top-left corner
-	//display.setCursor(10, 1);     // Start at top-left corner
+	// display.setCursor(10, 1);     // Start at top-left corner
 	display.cp437(true);
 
-	//display.println(F("time :"));
+	// display.println(F("time :"));
 
 	// Serial.println(NTP.getTimeStr());
 
-	display.println(NTP.getTimeStr());
+	// display.println(NTP.getTimeStr());
 
-	//Serial.println(NTP.getTimeDateString());
-	//display.println(NTP.getTimeDateString());
-	//display.write();
+	// Serial.println(NTP.getTimeDateString());
+	display.print(hour(syncTime));
+	display.print(":");
+	display.print(minute(syncTime));
+	display.print(":");
+	display.print(second(syncTime));
+	// display.write();
 
-	//display.display();
+	// display.display();
 }

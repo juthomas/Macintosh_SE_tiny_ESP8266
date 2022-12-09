@@ -4,13 +4,19 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 #include <ESP8266WiFi.h>
-#include <NtpClientLib.h>
+// #include <NtpClientLib.h>
+#include <Time.h>
+
 #include <WiFiUdp.h>
 #include <ESP8266HTTPClient.h>
 #include <WiFiClientSecureBearSSL.h>
+// #include <ESPAsyncWebServer.h>
+#include <ESP8266WebServer.h>
+#include <WebSocketsServer.h>// Socket server library in 'lib' folder
+
 #define NB_TRYWIFI 20
 
-const char *ssid = "Livebox-75C0";
+const char *ssid = "Mac_Se";
 const char *password = "ipW2j3EzJQg6LF9Er6";
 
 #define LOGO_HEIGHT 8

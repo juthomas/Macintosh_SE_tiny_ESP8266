@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <link rel="stylesheet" type="text/css" href="index.css">
+  <link rel="icon" href="fpv.ico">
+  <meta charset="utf-8" />
+</head>
+
+<body>
+  <h1>FPV RACE</h1>
+  <button class="standardButton" id="startBtn" class="button">start</button>
+  <button class="standardButton" id="stopBtn" class="button">stop</button>
+  <!-- <button class="standardButton" id="stopSilentBtn" class="button">stop silently</button> -->
+  <button class="standardButton" id="offBtn" class="button">off</button>
+  <input  id="soundChk" type="checkbox" checked><label for="soundChk">sounds</label>
+
+  <br />
+  <div class="timeConsoleAndLights">
+
+    
+    <div class="timeConsole">
+        
+      <button class="standardButton"  id="lapTimeOnBtn" class="button">lap time</button>
+      <button class="standardButton"  id="clearBtn" class="button">clear</button>
+      
+    </br>
+    <textarea id="rxConsole" readonly></textarea>
+  </div>
+  <div class="lightsAndLap">
+
+    <div class="startLights">
+      <button class="lightBtn" id="redBtn" class="button">red</button>
+      <br />
+      <button class="lightBtn" id="orangeBtn" class="button">orange</button>
+      <br />
+      <button class="lightBtn" id="greenBtn" class="button">green</button>
+    </div>
+    <div class="lap">
+      <button class="standardButton" id="getYellowLapBtn" class="button">get car one lap</button>
+      <button class="standardButton" id="getWhiteLapBtn" class="button">get car two lap</button>
+      <button class="standardButton" id="getRedLapBtn" class="button">get car three lap</button>
+      <button class="standardButton" id="getBlueLapBtn" class="button">get car four lap</button>
+      
+      
+    </div>
+  </div>
+</div>
+    
+    <br />
+    <br />
+    <br />
+    <br />
+    <br />
+    <input class="sensorInput" id="sensorUpdateInput" type="number" placeholder="Sensor update (ms)" />
+    <button id="sensorUpdateBtn">Ok</button>
+    <br>
+    <input class="sensorInput" id="sensorRefinementInput" type="number" placeholder="Sensor refinement" />
+    <button id="sensorRefinementBtn">Ok</button>
+    <br>
+    <input class="sensorInput" id="sensorMaxDistanceInput" type="number" placeholder="Sensor max distance (cm)" />
+    <button id="sensorMaxDistanceBtn">Ok</button>
+</body>
+<script src="main.js"></script>
+
+</html>
+Footer
