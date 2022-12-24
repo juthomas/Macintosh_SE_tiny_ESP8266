@@ -30,7 +30,7 @@ IRAM_ATTR void incrementEEPROMValue()
 	EEPROM.get(0, currentPage);
 	currentPage = currentPage < MODES_ALL - 1 ? currentPage + 1 : 0;
 	EEPROM.put(0, currentPage);
-
+	EEPROM.commit();
 	Serial.println("Interrupt.");
 	Serial.println(currentPage);
 }
@@ -38,6 +38,7 @@ IRAM_ATTR void incrementEEPROMValue()
 void setup()
 {
 	Serial.begin(115200);
+	EEPROM.begin(256);
 	pinMode(D5, INPUT_PULLUP);
 	EEPROM.get(0, currentPage);
 	attachInterrupt(D5, incrementEEPROMValue, FALLING);
@@ -410,7 +411,7 @@ void moveMouseMode()
 		y_desired = random(1, display.height() - 8);
 		for (int percentage = 0; percentage < 100; percentage++)
 		{
-						if (currentPage != MOUSE)
+			if (currentPage != MOUSE)
 			{
 				return;
 			}
