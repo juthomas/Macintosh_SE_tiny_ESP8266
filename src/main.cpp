@@ -1,12 +1,12 @@
 #include "./se_tiny.h"
 
-//HttpClient httpClient__;
+// HttpClient httpClient__;
 WiFiClient espClient;
 WiFiUDP ntpUDP;
-//HTTPClient httpClient;
+// HTTPClient httpClient;
 HTTPClient httpsClient;
-
-//NTPClient timeClient(ntpUDP, "europe.pool.ntp.org", 3600, 60000);
+#include <EEPROM.h>
+// NTPClient timeClient(ntpUDP, "europe.pool.ntp.org", 3600, 60000);
 
 #define SCREEN_WIDTH 128 // OLED display width, in pixels
 #define SCREEN_HEIGHT 64 // OLED display height, in pixels
@@ -22,10 +22,27 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 std::unique_ptr<BearSSL::WiFiClientSecure> client(new BearSSL::WiFiClientSecure);
 
+uint8_t currentPage = 0;
+
+IRAM_ATTR void incrementEEPROMValue()
+{
+	// Incrémenter la valeur stockée dans l'EEPROM et la réécrire
+	EEPROM.get(0, currentPage);
+	currentPage = currentPage < MODES_ALL - 1 ? currentPage + 1 : 0;
+	EEPROM.put(0, currentPage);
+
+	Serial.println("Interrupt.");
+	Serial.println(currentPage);
+}
+
 void setup()
 {
 	Serial.begin(115200);
+	pinMode(D5, INPUT_PULLUP);
+	EEPROM.get(0, currentPage);
+	attachInterrupt(D5, incrementEEPROMValue, FALLING);
 	// Wire.begin(1, 15);
+
 	//  second_wire.begin(9,10);
 	// SSD1306_SWITCHCAPVCC = generate display voltage from 3.3V internally
 	if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C))
@@ -42,17 +59,17 @@ void setup()
 	// Show initial display buffer contents on the screen --
 	// the library initializes this with an Adafruit splash screen.
 	display.display();
-	//delay(1000); // Pause for 2 seconds
+	// delay(1000); // Pause for 2 seconds
 
 	// Clear the buffer
 	display.clearDisplay();
 
 	WiFi.begin(ssid, password);
 
-	//display.drawBitmap(30, 30, mac_logo2_bmp, LOGO2_WIDTH, LOGO2_HEIGHT, SSD1306_WHITE);
+	// display.drawBitmap(30, 30, mac_logo2_bmp, LOGO2_WIDTH, LOGO2_HEIGHT, SSD1306_WHITE);
 
-	//display.println("Connecting to WiFi.");
-	//display.display();
+	// display.println("Connecting to WiFi.");
+	// display.display();
 	Serial.println("Connecting to WiFi.");
 	int _try = 0;
 	while (WiFi.status() != WL_CONNECTED)
@@ -78,31 +95,31 @@ void setup()
 		_try++;
 	}
 
-	//display.clearDisplay();
+	// display.clearDisplay();
 	Serial.println("Connected to the WiFi network");
-	//display.println("Connected to the WiFi network");
-	//display.display();
-	// Draw a single pixel in white
-	// display.drawPixel(10, 10, WHITE);
+	// display.println("Connected to the WiFi network");
+	// display.display();
+	//  Draw a single pixel in white
+	//  display.drawPixel(10, 10, WHITE);
 
 	// Show the display buffer on the screen. You MUST call display() after
 	// drawing commands to make them visible on screen!
-	//display.display();
-	//delay(2000);
+	// display.display();
+	// delay(2000);
 	// display.display() is NOT necessary after every single drawing command,
 	// unless that's what you want...rather, you can batch up a bunch of
 	// drawing operations and then update the screen all at once by calling
 	// display.display(). These examples demonstrate both approaches...
-	//display.clearDisplay();
-	//display.println("NTP client starting...");
+	// display.clearDisplay();
+	// display.println("NTP client starting...");
 	Serial.println("NTP client starting...");
-	//display.display();
+	// display.display();
 	displayLoading();
 	NTP.begin("pool.ntp.org", 1, true);
 	NTP.setInterval(1000);
-	//timeClient.begin();
-	//display.clearDisplay();
-	//display.println("NTP client started!");
+	// timeClient.begin();
+	// display.clearDisplay();
+	// display.println("NTP client started!");
 	Serial.println("NTP client started!");
 	display.display();
 
@@ -123,7 +140,7 @@ void setup()
 	}else {
 					 Serial.printf("[HTTP] GET... failed, error: %s\n", httpClient.errorToString(httpCode).c_str());
 			 }
-	
+
 //  client.get("http://www.arduino.cc/asciilogo.txt");
 }*/
 
@@ -147,7 +164,33 @@ void loop()
 {
 	display.clearDisplay();
 	displayBackground();
-	printHttpPageContent("https://juthomas.github.io/test_site_web/micro-pc-content");
+	// printHttpPageContent("https://juthomas.github.io/test_site_web/micro-pc-content");
+
+	display.setTextSize(1);		 // Normal 1:1 pixel scale
+	display.setTextColor(BLACK); // Draw white text
+	display.setCursor(1, 12);	 // Start at top-left corner
+	display.cp437(true);
+
+	switch (currentPage)
+	{
+	case DESKTOP:
+		viewDesktopMode();
+		break;
+	case PONG:
+		playPongMode();
+		break;
+	case MOUSE:
+		moveMouseMode();
+		break;
+
+	case TIME:
+		displayTimeMode();
+		break;
+
+	default:
+		break;
+	}
+
 	print_time();
 	display.display();
 	delay(500);
@@ -218,19 +261,16 @@ void displayTimeMode()
 	display.drawLine(8, 14, 40, 14, SSD1306_BLACK);
 	display.drawLine(8, 16, 40, 16, SSD1306_BLACK);
 
-
 	display.drawBitmap(44, 12, date_title_bmp, DATE_TITLE_WIDTH, DATE_TITLE_HEIGHT, SSD1306_BLACK);
 
 	display.drawLine(81, 12, 113, 12, SSD1306_BLACK);
 	display.drawLine(81, 14, 113, 14, SSD1306_BLACK);
 	display.drawLine(81, 16, 113, 16, SSD1306_BLACK);
 
-
 	display.drawRect(116, 12, 5, 5, SSD1306_BLACK);
 	display.drawRect(116, 12, 3, 3, SSD1306_BLACK);
 	display.drawRect(122, 12, 5, 5, SSD1306_BLACK);
 	display.drawLine(122, 14, 126, 14, SSD1306_BLACK);
-
 
 	display.drawLine(120, 19, 120, display.height(), SSD1306_BLACK);
 	display.fillRect(122, 20, 5, 17, SSD1306_BLACK);
@@ -240,13 +280,12 @@ void displayTimeMode()
 	display.drawBitmap(121, 58, arrow_down_bmp, ARROW_DOWN_WIDTH, ARROW_DOWN_HEIGHT, SSD1306_BLACK);
 	display.drawBitmap(100, 52, mouse_bmp, MOUSE_WIDTH, MOUSE_HEIGHT, SSD1306_BLACK);
 
-
 	display.setTextSize(1);		 // Normal 1:1 pixel scale
 	display.setTextColor(BLACK); // Draw white text
-		 // Start at top-left corner
-	//display.setCursor(10, 1);     // Start at top-left corner
+								 // Start at top-left corner
+	// display.setCursor(10, 1);     // Start at top-left corner
 	display.cp437(true);
-	//display.println(F("time :"));
+	// display.println(F("time :"));
 
 	// Serial.println(NTP.getTimeStr());
 	// time_t currentTime = NTP.getTime();
@@ -314,6 +353,11 @@ void playPongMode()
 		y_desired = random(17, 55);
 		for (int percentage = 0; percentage < 100; percentage++)
 		{
+			if (currentPage != PONG)
+			{
+				return;
+			}
+
 			x_current = map(percentage, playerTurn == true ? 0 : 100, playerTurn == true ? 100 : 0, x_min, x_max);
 
 			y_current = map(percentage, 0, 100, y_actual, y_desired);
@@ -329,8 +373,8 @@ void playPongMode()
 			{
 				y_player_2 = map(percentage, 0, 100, y_player_2_old, y_desired) - 7;
 			}
-			//drawDestopIcons();
-			//display.drawBitmap(x_current, y_current, mouse_bmp, MOUSE_WIDTH, MOUSE_HEIGHT, SSD1306_BLACK);
+			// drawDestopIcons();
+			// display.drawBitmap(x_current, y_current, mouse_bmp, MOUSE_WIDTH, MOUSE_HEIGHT, SSD1306_BLACK);
 			display.drawBitmap(60, 14, pong_middle_bmp, PONG_MIDDLE_WIDTH, PONG_MIDDLE_HEIGHT, SSD1306_BLACK);
 			display.drawBitmap(5, y_player_1, pong_player_bmp, PONG_PLAYER_WIDTH, PONG_PLAYER_HEIGHT, SSD1306_BLACK);
 			display.drawBitmap(116, y_player_2, pong_player_bmp, PONG_PLAYER_WIDTH, PONG_PLAYER_HEIGHT, SSD1306_BLACK);
@@ -366,6 +410,10 @@ void moveMouseMode()
 		y_desired = random(1, display.height() - 8);
 		for (int percentage = 0; percentage < 100; percentage++)
 		{
+						if (currentPage != MOUSE)
+			{
+				return;
+			}
 			x_current = map(percentage, 0, 100, x_actual, x_desired);
 			y_current = map(percentage, 0, 100, y_actual, y_desired);
 
@@ -448,14 +496,14 @@ void printHttpPageContent(String link)
 	// https://raw.githubusercontent.com/juthomas/Macintosh_SE_tiny_ESP8266/master/se_state
 	String textString = getHttpsPagePayload("https://raw.githubusercontent.com/juthomas/Macintosh_SE_tiny_ESP8266/master/se_state");
 	// String textString = getHttpsPagePayload("https://juthomas.github.io/test_site_web/micro-pc-content");
-	//display.clearDisplay();
+	// display.clearDisplay();
 	display.setTextSize(1);		 // Normal 1:1 pixel scale
 	display.setTextColor(BLACK); // Draw white text
 	display.setCursor(1, 12);	 // Start at top-left corner
 	display.cp437(true);
 
 	customPrintStringZone(textString, 1, 12, 9);
-	//display.print(textString);
+	// display.print(textString);
 }
 
 String getHttpsPagePayload(String link)
@@ -489,8 +537,8 @@ String getHttpsPagePayload(String link)
 					payload = httpsClient.getString();
 					Serial.println(payload);
 
-					//String payload = httpsClient.getString();
-					//Serial.println(payload);
+					// String payload = httpsClient.getString();
+					// Serial.println(payload);
 				}
 				else
 				{
@@ -549,13 +597,13 @@ void getHttpsPageStream(String link)
 							int c = client->readBytes(buff, ((size > sizeof(buff) - 1) ? sizeof(buff) - 1 : size));
 
 							// write it to Serial
-							//Serial.write(buff, c);
+							// Serial.write(buff, c);
 							Serial.println(ESP.getFreeHeap(), DEC);
 							Serial.printf("Prepare to feed httpsContent, left %d\n", len);
 							httpsContent += ((const __FlashStringHelper *)buff);
 							;
 
-							//httpsContent += toCharArray(buff, c);
+							// httpsContent += toCharArray(buff, c);
 							if (len > 0)
 							{
 								len -= c;
@@ -566,8 +614,8 @@ void getHttpsPageStream(String link)
 					Serial.println("https content : ");
 					Serial.println(httpsContent);
 
-					//String payload = httpsClient.getString();
-					//Serial.println(payload);
+					// String payload = httpsClient.getString();
+					// Serial.println(payload);
 				}
 				else
 				{
@@ -606,25 +654,25 @@ void print_time()
 	}
 	Serial.flush();
 */
-	//delay(5000);
+	// delay(5000);
 
-	//timeClient.update();
-	//display.clearDisplay();
+	// timeClient.update();
+	// display.clearDisplay();
 	display.setTextSize(1);		 // Normal 1:1 pixel scale
 	display.setTextColor(BLACK); // Draw white text
 	display.setCursor(77, 1);	 // Start at top-left corner
-	//display.setCursor(10, 1);     // Start at top-left corner
+	// display.setCursor(10, 1);     // Start at top-left corner
 	display.cp437(true);
 
-	//display.println(F("time :"));
+	// display.println(F("time :"));
 
 	// Serial.println(NTP.getTimeStr());
 
 	display.println(NTP.getTimeStr());
 
-	//Serial.println(NTP.getTimeDateString());
-	//display.println(NTP.getTimeDateString());
-	//display.write();
+	// Serial.println(NTP.getTimeDateString());
+	// display.println(NTP.getTimeDateString());
+	// display.write();
 
-	//display.display();
+	// display.display();
 }

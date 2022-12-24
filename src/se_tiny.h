@@ -13,6 +13,14 @@
 const char *ssid = "Livebox-75C0";
 const char *password = "ipW2j3EzJQg6LF9Er6";
 
+enum e_modes {
+	DESKTOP = 0,
+	PONG,
+	MOUSE,
+	TIME,
+	MODES_ALL
+};
+
 #define LOGO_HEIGHT 8
 #define LOGO_WIDTH 8
 static const unsigned char PROGMEM mac_logo_bmp[] =
@@ -259,6 +267,8 @@ void drawDestopIcons();
 void viewDesktopMode();
 
 void playPongMode();
+
+void displayTimeMode();
 
 void moveMouseMode();
 
