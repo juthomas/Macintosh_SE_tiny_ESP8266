@@ -1,24 +1,31 @@
 #include "./se_tiny.h"
-
-// HttpClient httpClient__;
-WiFiClient espClient;
-WiFiUDP ntpUDP;
-// HTTPClient httpClient;
-HTTPClient httpsClient;
-#include <EEPROM.h>
-// NTPClient timeClient(ntpUDP, "europe.pool.ntp.org", 3600, 60000);
-
 #define SCREEN_WIDTH 128 // OLED display width, in pixels
 #define SCREEN_HEIGHT 64 // OLED display height, in pixels
 
 // Declaration for an SSD1306 display connected to I2C (SDA, SCL pins)
 #define OLED_RESET -1 // Reset pin # (or -1 if sharing Arduino reset pin)
 
-// SDA => D2
-// SCK => D1
-Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+/**
+ * === HARDWARE ===
+ * ESP8266 D1 Mini
+ * 0.96" OLED I2C Screen
+ * USB-C Female Breakout Connector JRC-B008
+ * SMD Button 3X6X5mm 2Pin
+ * 
+ * ==== PINOUT ====
+ * D1 => SCL
+ * D2 => SDA
+ * D5 => Button
+ * 5V => Usb
+ * 3V => Screen VCC
+ * GND => Usb, Button, Screen GND
+ * 
+ * USB D- to Pin 7 of CH430G
+ * USB D+ to Pin 6 of CH340G
+ */
 
-#define NUMFLAKES 10 // Number of snowflakes in the animation example
+WiFiUDP ntpUDP;
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 std::unique_ptr<BearSSL::WiFiClientSecure> client(new BearSSL::WiFiClientSecure);
 
@@ -42,9 +49,6 @@ void setup()
 	pinMode(D5, INPUT_PULLUP);
 	EEPROM.get(0, currentPage);
 	attachInterrupt(D5, incrementEEPROMValue, FALLING);
-	// Wire.begin(1, 15);
-
-	//  second_wire.begin(9,10);
 	// SSD1306_SWITCHCAPVCC = generate display voltage from 3.3V internally
 	if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C))
 	{
@@ -67,10 +71,6 @@ void setup()
 
 	WiFi.begin(ssid, password);
 
-	// display.drawBitmap(30, 30, mac_logo2_bmp, LOGO2_WIDTH, LOGO2_HEIGHT, SSD1306_WHITE);
-
-	// display.println("Connecting to WiFi.");
-	// display.display();
 	Serial.println("Connecting to WiFi.");
 	int _try = 0;
 	while (WiFi.status() != WL_CONNECTED)
@@ -96,77 +96,22 @@ void setup()
 		_try++;
 	}
 
-	// display.clearDisplay();
 	Serial.println("Connected to the WiFi network");
-	// display.println("Connected to the WiFi network");
-	// display.display();
-	//  Draw a single pixel in white
-	//  display.drawPixel(10, 10, WHITE);
 
-	// Show the display buffer on the screen. You MUST call display() after
-	// drawing commands to make them visible on screen!
-	// display.display();
-	// delay(2000);
-	// display.display() is NOT necessary after every single drawing command,
-	// unless that's what you want...rather, you can batch up a bunch of
-	// drawing operations and then update the screen all at once by calling
-	// display.display(). These examples demonstrate both approaches...
-	// display.clearDisplay();
-	// display.println("NTP client starting...");
 	Serial.println("NTP client starting...");
-	// display.display();
 	displayLoading();
 	NTP.begin("pool.ntp.org", 1, true);
 	NTP.setInterval(1000);
-	// timeClient.begin();
-	// display.clearDisplay();
-	// display.println("NTP client started!");
+
 	Serial.println("NTP client started!");
 	display.display();
 
 	client->setInsecure();
-
-	/*httpClient.begin("http://www.arduino.cc/asciilogo.txt");
-	int httpCode = httpClient.GET();
-	Serial.printf("Http code :%d\n", httpCode);
-	if (httpCode > 0)
-	{
-		if (httpCode == 200)//OK code
-		{
-			String payload = httpClient.getString();
-			Serial.println(payload);
-		}else {
-					 Serial.printf("[HTTP] GET... failed, error: %s\n", httpClient.errorToString(httpCode).c_str());
-			 }
-	}else {
-					 Serial.printf("[HTTP] GET... failed, error: %s\n", httpClient.errorToString(httpCode).c_str());
-			 }
-
-//  client.get("http://www.arduino.cc/asciilogo.txt");
-}*/
-
-	/*
-NTP.onNTPSyncEvent([](NTPSyncEvent_t error) {
-	if (error) {
-		Serial.print("Time Sync error: ");
-		if (error == noResponse)
-			Serial.println("NTP server not reachable");
-		else if (error == invalidAddress)
-			Serial.println("Invalid NTP server address");
-		}
-	else {
-		Serial.print("Got NTP time: ");
-		Serial.println(NTP.getTimeDateString(NTP.getLastNTPSync()));
-	}
-});
-*/
 }
 void loop()
 {
 	display.clearDisplay();
 	displayBackground();
-	// printHttpPageContent("https://juthomas.github.io/test_site_web/micro-pc-content");
-
 	display.setTextSize(1);		 // Normal 1:1 pixel scale
 	display.setTextColor(BLACK); // Draw white text
 	display.setCursor(1, 12);	 // Start at top-left corner
@@ -248,7 +193,6 @@ void drawDestopIcons()
 
 void viewDesktopMode()
 {
-
 	drawDestopIcons();
 	display.drawBitmap(30, 50, mouse_bmp, MOUSE_WIDTH, MOUSE_HEIGHT, SSD1306_BLACK);
 }
@@ -283,18 +227,10 @@ void displayTimeMode()
 
 	display.setTextSize(1);		 // Normal 1:1 pixel scale
 	display.setTextColor(BLACK); // Draw white text
-								 // Start at top-left corner
-	// display.setCursor(10, 1);     // Start at top-left corner
 	display.cp437(true);
-	// display.println(F("time :"));
-
-	// Serial.println(NTP.getTimeStr());
-	// time_t currentTime = NTP.getTime();
 	struct tm test = {0};
 	sscanf(NTP.getTimeDateString().c_str(), "%d:%d:%d %d/%d/%d",
 		   &test.tm_hour, &test.tm_min, &test.tm_sec, &test.tm_mday, &test.tm_mon, &test.tm_year);
-	// Serial.printf("h:%d, m:%d, s:%d    d:%d, m:%d, y%d\n", test.tm_hour, test.tm_min, test.tm_sec,
-	// 			  test.tm_mday, test.tm_mon, test.tm_year);
 	test.tm_isdst = -1; // Assume local daylight setting per date/time
 	test.tm_mon--;		// Months since January
 	if (test.tm_year >= 0 && test.tm_year < 100)
@@ -324,10 +260,6 @@ void displayTimeMode()
 		display.print("th");
 	}
 	display.printf(" %s %04d", monthStr(month(currentTime)), year(currentTime));
-
-	// display.println(NTP.getTimeDateString());
-	// display.println(NTP.getDateStr());
-	// display.println(NTP.getTimeStr());
 }
 
 void playPongMode()
@@ -430,250 +362,12 @@ void moveMouseMode()
 	}
 }
 
-void customPrintStringZone(String str, int x, int y, int lineSpacing)
-{
-	String tmpStr = "";
-
-	if (str.indexOf("[{") != -1 && str.indexOf("}]") != -1 && str.indexOf("[{") < str.indexOf("}]"))
-	{
-		tmpStr = str.substring(str.indexOf("[{") + 2, str.indexOf("}]"));
-		Serial.printf("Http request : ");
-		String pageContent = getHttpsPagePayload(tmpStr);
-		display.setCursor(x, y);
-		display.print(pageContent);
-
-		Serial.println(pageContent);
-		return;
-	}
-	else if (str.indexOf("[VIEW_DESKTOP]") != -1)
-	{
-		viewDesktopMode();
-		return;
-	}
-	else if (str.indexOf("[PLAY_PONG]") != -1)
-	{
-		playPongMode();
-		return;
-	}
-	else if (str.indexOf("[MOVE_MOUSE]") != -1)
-	{
-		moveMouseMode();
-		return;
-	}
-	else if (str.indexOf("[DISPLAY_TIME]") != -1)
-	{
-		displayTimeMode();
-		return;
-	}
-
-	while (str != "")
-	{
-		if (str.indexOf("\n") != -1)
-		{
-			tmpStr = str.substring(0, str.indexOf("\n"));
-			str = str.substring(str.indexOf("\n") + 1);
-
-			Serial.println("2");
-		}
-		else
-		{
-			Serial.println("1");
-			tmpStr = str;
-			str = "";
-		}
-		Serial.println("--");
-		Serial.println(tmpStr);
-		Serial.println("--");
-		Serial.println(str);
-		Serial.println("--");
-		display.setCursor(x, y);
-		display.print(tmpStr);
-		y += lineSpacing;
-	}
-}
-
-void printHttpPageContent(String link)
-{
-	// https://raw.githubusercontent.com/juthomas/Macintosh_SE_tiny_ESP8266/master/se_state
-	String textString = getHttpsPagePayload("https://raw.githubusercontent.com/juthomas/Macintosh_SE_tiny_ESP8266/master/se_state");
-	// String textString = getHttpsPagePayload("https://juthomas.github.io/test_site_web/micro-pc-content");
-	// display.clearDisplay();
-	display.setTextSize(1);		 // Normal 1:1 pixel scale
-	display.setTextColor(BLACK); // Draw white text
-	display.setCursor(1, 12);	 // Start at top-left corner
-	display.cp437(true);
-
-	customPrintStringZone(textString, 1, 12, 9);
-	// display.print(textString);
-}
-
-String getHttpsPagePayload(String link)
-{
-	String payload = "";
-
-	Serial.print("[HTTPS] begin...\n");
-	Serial.print("Link Requested :");
-	Serial.println(link);
-	if (httpsClient.begin(*client, link))
-	{ // HTTPS
-
-		Serial.print("[HTTPS] GET...\n");
-		// start connection and send HTTP header
-		int httpCode = httpsClient.GET();
-
-		// httpCode will be negative on error
-		if (httpCode > 0)
-		{
-			// HTTP header has been send and Server response header has been handled
-			Serial.printf("[HTTPS] GET... code: %d\n", httpCode);
-
-			// file found at server
-			if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY)
-			{
-				String httpsContent = F("");
-				int len = httpsClient.getSize();
-				if ((uint32_t)len < ESP.getFreeHeap())
-				{
-
-					payload = httpsClient.getString();
-					Serial.println(payload);
-
-					// String payload = httpsClient.getString();
-					// Serial.println(payload);
-				}
-				else
-				{
-					Serial.printf("Only %do of ram left need %do", ESP.getFreeHeap(), len);
-				}
-			}
-		}
-		else
-		{
-			Serial.printf("[HTTPS] GET... failed, error: %s\n", httpsClient.errorToString(httpCode).c_str());
-		}
-
-		httpsClient.end();
-	}
-	else
-	{
-		Serial.printf("[HTTPS] Unable to connect\n");
-	}
-	return (payload);
-}
-
-void getHttpsPageStream(String link)
-{
-	Serial.print("[HTTPS] begin...\n");
-	if (httpsClient.begin(*client, link))
-	{ // HTTPS
-
-		Serial.print("[HTTPS] GET...\n");
-		// start connection and send HTTP header
-		int httpCode = httpsClient.GET();
-
-		// httpCode will be negative on error
-		if (httpCode > 0)
-		{
-			// HTTP header has been send and Server response header has been handled
-			Serial.printf("[HTTPS] GET... code: %d\n", httpCode);
-
-			// file found at server
-			if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY)
-			{
-				String httpsContent = F("");
-				int len = httpsClient.getSize();
-				if ((uint32_t)len < ESP.getFreeHeap())
-				{
-
-					Serial.printf("Https page size : %d\n", len);
-					static uint8_t buff[128] = {0};
-					while (httpsClient.connected() && (len > 0 || len == -1))
-					{
-						// get available data size
-						size_t size = client->available();
-
-						if (size)
-						{
-							// read up to 128 byte
-							int c = client->readBytes(buff, ((size > sizeof(buff) - 1) ? sizeof(buff) - 1 : size));
-
-							// write it to Serial
-							// Serial.write(buff, c);
-							Serial.println(ESP.getFreeHeap(), DEC);
-							Serial.printf("Prepare to feed httpsContent, left %d\n", len);
-							httpsContent += ((const __FlashStringHelper *)buff);
-							;
-
-							// httpsContent += toCharArray(buff, c);
-							if (len > 0)
-							{
-								len -= c;
-							}
-						}
-						delay(1);
-					}
-					Serial.println("https content : ");
-					Serial.println(httpsContent);
-
-					// String payload = httpsClient.getString();
-					// Serial.println(payload);
-				}
-				else
-				{
-					Serial.printf("Only %do of ram left need %do", ESP.getFreeHeap(), len);
-				}
-			}
-		}
-		else
-		{
-			Serial.printf("[HTTPS] GET... failed, error: %s\n", httpsClient.errorToString(httpCode).c_str());
-		}
-
-		httpsClient.end();
-	}
-	else
-	{
-		Serial.printf("[HTTPS] Unable to connect\n");
-	}
-}
-
 void print_time()
 {
 
-	/*
-	int httpCode = httpClient__.get("https://techtutorialsx.com/2016/07/17/esp8266-http-get-requests/");
-	Serial.printf("Http code 1 : %d", httpCode);
-	if (httpCode == 0)
-	{
-		//httpCode = httpClient__.responseStatusCode();
-		Serial.printf("Http code 2 : %d", httpCode);
-	}*/
-	/*
-	while (httpClient__.available()) {
-		char c = httpClient__.read();
-		Serial.print(c);
-	}
-	Serial.flush();
-*/
-	// delay(5000);
-
-	// timeClient.update();
-	// display.clearDisplay();
 	display.setTextSize(1);		 // Normal 1:1 pixel scale
 	display.setTextColor(BLACK); // Draw white text
 	display.setCursor(77, 1);	 // Start at top-left corner
-	// display.setCursor(10, 1);     // Start at top-left corner
 	display.cp437(true);
-
-	// display.println(F("time :"));
-
-	// Serial.println(NTP.getTimeStr());
-
 	display.println(NTP.getTimeStr());
-
-	// Serial.println(NTP.getTimeDateString());
-	// display.println(NTP.getTimeDateString());
-	// display.write();
-
-	// display.display();
 }
